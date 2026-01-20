@@ -5,9 +5,9 @@ build:
   commands:
     build:
       - python3 -m pip install --upgrade pip
-      - python3 -m pip install -r requirements.txt --target /app
+      - python3 -m pip install -r requirements.txt
 
 run:
-  command: PYTHONPATH=/app python3 -m gunicorn --bind 0.0.0.0:$PORT app:app
+  command: gunicorn --bind 0.0.0.0:$PORT app:app
   network:
     port: 8080
