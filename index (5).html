@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang=3D"en">
+<head>
+    <meta charset=3D"utf-8">
+    <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=
+=3D1.0, maximum-scale=3D1.0, user-scalable=3Dno, viewport-fit=3Dcover">
+    <title>JIBL Legal Bot - Smriti</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Rob=
+oto, 'Helvetica Neue', Arial, sans-serif;
+            background: #FFFFFF;
+            color: #333333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: flex 0.3s ease;
+        }
+
+        .left-panel.partitioned {
+            flex: 0 0 50%;
+        }
+
+        .right-panel {
+            display: none;
+            flex: 0 0 50%;
+            flex-direction: column;
+            border-left: 1px solid #E0E0E0;
+            background: #F5F5F5;
+        }
+
+        .right-panel.active {
+            display: flex;
+        }
+
+        .document-viewer-header {
+            padding: 16px 20px;
+            background: #D4A574;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-viewer-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #000000;
+            margin: 0;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #000000;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .document-viewer-content {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F5F5F5;
+        }
+
+        .document-viewer-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .document-placeholder {
+            color: #666666;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .header {
+            padding: 16px 20px;
+            border-bottom: none;
+            background: #F5F5F5;
+            box-shadow: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .header-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-links a {
+            color: #666666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+
+        .header-links a:hover {
+            color: #333333;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #FFFFFF;
+            border: 3px solid #D4A574;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #666666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1a1a1a;
+        }
+
+        .modal-content {
+            padding: 24px;
+            overflow-y: auto;
+            color: #1a1a1a;
+            flex: 1;
+            line-height: 1.6;
+        }
+
+        .modal-content p {
+            margin: 12px 0;
+        }
+
+        .modal-content h1 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin: 20px 0 12px 0;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 18px 0 10px 0;
+            color: #1a1a1a;
+        }
+
+        .modal-content h3 {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin: 16px 0 8px 0;
+            color: #1a1a1a;
+        }
+
+        .modal-content ul {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .modal-content li {
+            margin: 6px 0;
+        }
+
+        .modal-content strong {
+            font-weight: 700;
+        }
+
+        .header-title {
+            display: none;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .header-title.show {
+            display: block;
+        }
+
+        .logo-container img {
+            max-height: 50px;
+            width: auto;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            background: #F5F5F5;
+        }
+
+        .welcome-message {
+            text-align: center;
+            max-width: 100%;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 0 8px;
+        }
+
+        .welcome-message .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .welcome-message .subtitle {
+            font-size: 16px;
+            color: #666666;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease-in;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: #D4A574;
+            color: #FFFFFF;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            text-align: left;
+            margin-right: 0;
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: #FFFFFF;
+            color: #1a1a1a;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: none;
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .bot-message p {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+
+        .bot-message p:first-child {
+            margin-top: 0;
+        }
+
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .bot-message strong {
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .bot-message ul {
+            margin: 8px 0;
+            padding-left: 24px;
+            list-style-position: outside;
+            list-style-type: disc;
+        }
+
+        .bot-message ul ul {
+            margin: 4px 0;
+            padding-left: 32px;
+            list-style-type: circle;
+        }
+
+        .bot-message ul ul ul {
+            margin: 4px 0;
+            padding-left: 32px;
+            list-style-type: square;
+        }
+
+        .bot-message li {
+            margin: 4px 0;
+            line-height: 1.6;
+            display: list-item;
+        }
+
+        .bot-message ul li::marker {
+            color: #666666;
+        }
+
+        .bot-message ul ul li::marker {
+            color: #888888;
+        }
+
+        .bot-message ul ul ul li::marker {
+            color: #AAAAAA;
+        }
+
+        .bot-message ol li strong,
+        .bot-message ul li strong {
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .bot-message h1,
+        .bot-message h2,
+        .bot-message h3,
+        .bot-message h4 {
+            font-weight: 700;
+            margin: 12px 0 6px 0;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+        .bot-message h1:first-child,
+        .bot-message h2:first-child,
+        .bot-message h3:first-child,
+        .bot-message h4:first-child {
+            margin-top: 0;
+        }
+
+        .bot-message h1 {
+            font-size: 1.25em;
+        }
+
+        .bot-message h2 {
+            font-size: 1.15em;
+        }
+
+        .bot-message h3 {
+            font-size: 1.05em;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            align-self: flex-start;
+            background: #FFFFFF;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #FFFFFF;
+            border-top: 1px solid #E0E0E0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid #E0E0E0;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            background: #F9F9F9;
+            color: #1a1a1a;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #D4A574;
+            background: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #999999;
+        }
+
+        .input-field:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #D4A574;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #C89564;
+            transform: scale(1.05);
+        }
+
+        .send-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-button::after {
+            content: '=E2=9E=A4';
+            color: #000000;
+            font-size: 20px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trace-button {
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: #F5F5F5;
+            border: 1px solid #E0E0E0;
+            border-radius: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #666666;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .trace-button:hover {
+            background: #E8E8E8;
+            color: #333333;
+        }
+
+        .sources-panel {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #F9F9F9;
+            border-radius: 12px;
+            border: 1px solid #E0E0E0;
+            font-size: 13px;
+            display: none;
+        }
+
+        .sources-panel strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .source-item {
+            margin: 6px 0;
+            color: #666666;
+            word-break: break-all;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .source-item:hover {
+            background: #E8E8E8;
+            color: #333333;
+        }
+
+        .startup-message {
+            background: #FFFFFF;
+            color: #1a1a1a;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            max-width: 75%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            margin-top: 8px;
+            border-radius: 18px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Scrollbar styling */
+        .chat-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: #F5F5F5;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #CCCCCC;
+            border-radius: 3px;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb:hover {
+            background: #999999;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .welcome-message .title {
+                font-size: 22px;
+            }
+
+            .welcome-message .subtitle {
+                font-size: 14px;
+            }
+
+            .message {
+                max-width: 85%;
+                padding: 10px 14px;
+            }
+
+            .chat-area {
+                padding: 16px 12px 16px;
+            }
+
+            .input-area {
+                padding: 10px 12px;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class=3D"header">
+    <div class=3D"logo-container">
+        <img src=3D"/static/logo.png" alt=3D"Jio Insurance Broking Ltd">
+    </div>
+    <span class=3D"header-title" id=3D"headerTitle"><b>SMRITI- JIBL AI Comp=
+liance Bot</b></span>
+    <div class=3D"header-links">
+        <a href=3D"#" onclick=3D"openModal('tc'); return false;">T&C</a>
+        <a href=3D"#" onclick=3D"openModal('privacy'); return false;">Priva=
+cy Policy</a>
+        <a href=3D"#" onclick=3D"openModal('disclaimer'); return false;">Di=
+sclaimer</a>
+    </div>
+</div>
+
+<div class=3D"main-container">
+<div class=3D"left-panel" id=3D"leftPanel">
+<div id=3D"chat" class=3D"chat-area">
+    <div class=3D"welcome-message">
+        <div class=3D"title">
+            <span>Smriti - An AI enabled Regulatory Compliance Bot</span>
+        </div>
+        <div class=3D"subtitle">
+            An internal AI-enabled guidance tool providing first-level regu=
+latory & compliance information to internal stakeholders for Insurance Brok=
+ing operations.
+        </div>
+    </div>
+</div>
+
+<div class=3D"typing-indicator" id=3D"typingIndicator">
+    <div class=3D"typing-dot"></div>
+    <div class=3D"typing-dot"></div>
+    <div class=3D"typing-dot"></div>
+</div>
+
+<div class=3D"input-area">
+    <input id=3D"input" class=3D"input-field" placeholder=3D"Ask your legal=
+ doubts..." autofocus>
+    <button class=3D"send-button" onclick=3D"sendMessage()"></button>
+</div>
+</div>
+
+<div class=3D"right-panel" id=3D"rightPanel">
+    <div class=3D"document-viewer-header">
+        <h2>Sources</h2>
+        <button class=3D"close-button" id=3D"closeButton" onclick=3D"closeD=
+ocumentViewer()">=C3=97</button>
+    </div>
+    <div class=3D"document-viewer-content" id=3D"documentViewerContent">
+        <div class=3D"document-placeholder">Select a document source</div>
+    </div>
+    </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class=3D"modal-overlay" id=3D"modalOverlay" onclick=3D"closeModalOnOve=
+rlay(event)">
+    <div class=3D"modal-box" onclick=3D"event.stopPropagation()">
+        <div class=3D"modal-header">
+            <h2 class=3D"modal-title" id=3D"modalTitle"></h2>
+            <button class=3D"modal-close" onclick=3D"closeModal()">=C3=97</=
+button>
+        </div>
+        <div class=3D"modal-content" id=3D"modalContent"></div>
+    </div>
+</div>
+
+<script>
+    // Modal content data
+    const modalContent =3D {
+        tc: {
+            title: "Terms & Conditions",
+            content: `TERMS OF USE FOR SMRITI AI
+These Terms of Use ("Terms") govern your access to and use of the internal =
+AI-powered chatbot, Smriti (the "Service"), provided by Jio Insurance Broki=
+ng Limited ("Company/JIBL"). By accessing or using the Service, you agree t=
+o be bound by these Terms.
+
+1. Purpose and Scope of the Service
+The Service is an internal, first-level informational support tool designed=
+ exclusively for employees of the Company.
+
+Its purpose is to provide preliminary answers to routine, low-risk legal an=
+d compliance queries related to the Company's business operations.
+
+The Service is intended to be a supplementary resource and is not a substit=
+ute for direct consultation with the Company's internal Legal and Complianc=
+e department.
+
+2. Limitations on Advice and Information
+Not Legal or Professional Advice: The information, data, and responses ("Ou=
+tput") generated by the Service do not constitute legal, compliance, financ=
+ial, or any other form of professional advice. No professional-client relat=
+ionship is established through the use of this Service.
+
+No Guarantee of Accuracy: The Output is generated by a probabilistic artifi=
+cial intelligence model and is provided for general informational purposes =
+only. The Company makes no representation or warranty as to the accuracy, c=
+ompleteness, or timeliness of the Output. The information may not reflect t=
+he most recent regulatory developments, internal policy changes, or the spe=
+cific nuances of a particular situation.
+
+Not an Official Interpretation: The Output shall not be considered an offic=
+ial interpretation, directive, or opinion from the Insurance Regulatory and=
+ Development Authority of India (IRDAI) or any other regulatory or governme=
+ntal body.
+
+3. User Responsibilities
+Accurate Input: You are responsible for providing clear, accurate, and comp=
+lete queries to the Service to receive the most relevant Output.
+
+Independent Validation: You must independently review, verify, and validate=
+ all Output before taking any action, making any decision, or relying on it=
+ for any purpose. The ultimate responsibility for the use of any Output res=
+ts with you.
+
+Mandatory Consultation: For any complex, high-risk, or definitive queries, =
+or before making any final decision based on information related to the Ser=
+vice, you must consult with the internal Legal and Compliance function.
+
+Confidentiality: You shall not input any sensitive personal data of clients=
+, customers, or third parties into the Service unless explicitly permitted =
+by Company policy and applicable law.
+
+4. Prohibited Uses
+You agree not to use the Service for any of the following purposes:
+To engage in any illegal, fraudulent, or malicious activity.
+
+To reverse-engineer, decompile, disassemble, or otherwise attempt to discov=
+er the source code or underlying algorithms of the Service.
+
+To conduct data scraping, data mining, or use any automated means to extrac=
+t large volumes of Output.
+
+To share Output with any external parties without the express prior written=
+ consent of the Legal and Compliance department.
+
+For any personal, non-business-related purposes.
+
+To transmit any data that is unlawful, infringes on any third-party rights,=
+ or contains viruses or other malicious code.
+
+5. Intellectual Property Rights
+Company IP: The Company retains all rights, title, and interest in and to t=
+he Service, including its software, algorithms, proprietary materials, and =
+all related intellectual property rights.
+
+User-Generated Content: All queries, prompts, and other inputs provided by =
+you, and all Output generated in response, shall be considered the property=
+ of the Company, created within the scope of your employment. The Company h=
+as the right to use this data to provide, maintain, analyze, and improve th=
+e Service.
+
+6. Privacy
+Your use of the Service is also governed by the Smriti Ai Privacy Policy. B=
+y using the Service, you acknowledge that the Company will collect and proc=
+ess data related to your interactions, including queries, metadata, and fee=
+dback, for the purposes outlined in the Privacy Policy.
+
+7. Limitation of Liability
+To the fullest extent permitted by law, the Company shall not be liable for=
+ any direct, indirect, incidental, special, consequential, or exemplary dam=
+ages, including but not limited to, damages for loss of profits, goodwill, =
+data, or other intangible losses, resulting from:
+Your access to or use of, or inability to access or use, the Service.
+
+Any action taken or decision made in reliance on the Output provided by the=
+ Service.
+
+Any errors, inaccuracies, or omissions in the Output.
+
+8. Governing Law and Compliance
+These Terms shall be governed by and construed in accordance with the laws =
+of India. Your use of the Service must comply with all applicable laws, reg=
+ulations, and internal Company policies, including but not limited to the d=
+irectives and regulations issued by the IRDAI.
+
+9. Modification of Terms
+The Company reserves the right to modify or replace these Terms at any time=
+. We will provide notice of any material changes. Your continued use of the=
+ Service after such changes constitutes your acceptance of the new Terms.
+
+10. Contact
+For any questions regarding these Terms or for definitive legal and complia=
+nce advice, please contact the internal Legal and Compliance department.
+Email: rohan.dcruz@jioinsure.in`
+        },
+        privacy: {
+            title: "Privacy Policy",
+            content: `PRIVACY POLICY FOR SMRITI AI
+
+1. Introduction
+Jio Insurance Broking Limited ("Company/JIBL," "we," "us," or "our") is com=
+mitted to protecting the privacy and security of your personal data. This P=
+rivacy Policy explains how we collect, use, process, and protect the person=
+al data of our employees ("you" or "your") in connection with your use of o=
+ur internal AI-powered chatbot, Smriti Ai (the "Service").
+
+This policy is designed to ensure our compliance with the Digital Personal =
+Data Protection Act, 2023 (DPDPA), the Information Technology Act, 2000, an=
+d applicable guidelines issued by the Insurance Regulatory and Development =
+Authority of India (IRDAI).
+
+2. Data We Collect
+When you use the Service, we may collect and process the following categori=
+es of data:
+User Interaction Data: The specific queries, prompts, conversations, and ot=
+her information you input into the Service.
+
+Account Data: Your employee identification details, such as your name, empl=
+oyee ID, and department, which are used to authenticate you as an authorize=
+d user.
+
+Metadata: Technical information generated from your use of the Service, inc=
+luding timestamps, session duration, and other system-generated logs.
+
+Feedback Data: Any ratings, comments, or feedback you voluntarily provide r=
+egarding the Service's performance and responses.
+
+3. Purpose of Data Collection and Use
+We collect and use your data for specified, explicit, and legitimate purpos=
+es, including:
+Service Provision: To operate the Service and provide you with responses to=
+ your queries.
+
+Service Improvement: To analyze usage patterns, train our AI models, and im=
+prove the accuracy, relevance, and performance of the Service.
+
+Internal Analytics: To identify common compliance questions, understand bus=
+iness needs, and inform internal training programs.
+
+Compliance and Auditing: To monitor adherence to internal policies and regu=
+latory requirements, and for internal audit purposes.
+
+Security: To ensure the security and integrity of the Service, prevent frau=
+dulent or prohibited uses, and troubleshoot technical issues.
+
+4. Data Storage, Security, and Retention
+Data Security: We have implemented reasonable security safeguards, includin=
+g technical and organizational measures such as encryption, access controls=
+, and regular security assessments, to protect your data from unauthorized =
+access, disclosure, alteration, or destruction, in accordance with the DPDP=
+A.
+
+Data Storage: Your data is stored on secure servers managed by the Company =
+or its authorized third-party service providers. Any transfer of data is co=
+nducted in compliance with applicable laws.
+
+Data Retention: We will retain your personal data only for as long as neces=
+sary to fulfill the purposes for which it was collected. Chat logs and inte=
+raction data will be retained in line with the Company's record management =
+policy and for a minimum period as required by IRDAI regulations (currently=
+ seven years).
+
+5. Access to and Disclosure of Data
+Internal Access: Access to the data collected by the Service is restricted =
+on a "need-to-know" basis to authorized personnel, such as IT administrator=
+s, members of the Legal and Compliance department for audit purposes, and d=
+ata scientists involved in improving the Service.
+
+Third-Party Disclosure: We do not sell or rent your personal data. We will =
+not disclose your data to external third parties, except where required by =
+law, regulation, or a valid legal process, or to authorized service provide=
+rs who are contractually bound to maintain the confidentiality and security=
+ of the data.
+
+6. Your Rights as a Data Principal
+Under the DPDPA, you have certain rights with respect to your personal data=
+. Subject to applicable law, you have the right to:
+Request access to your personal data that we hold.
+
+Request correction of any inaccurate or incomplete personal data.
+
+For information on how to exercise these rights, please contact the designa=
+ted authority mentioned in Section 8.
+
+7. Changes to this Privacy Policy
+We may update this Privacy Policy from time to time to reflect changes in o=
+ur practices or for other operational, legal, or regulatory reasons. We wil=
+l notify you of any material changes by appropriate internal communication =
+channels.
+
+8. Contact Us
+If you have any questions, concerns, or complaints regarding this Privacy P=
+olicy or our data processing practices, please contact the [Data Protection=
+ Officer/Legal and Compliance Department] at:
+Email: rohan.dcruz@jioinsure.in`
+        },
+        disclaimer: {
+            title: "Disclaimer",
+            content: `DISCLAIMER FOR SMRITI AI
+
+PLEASE READ THIS DISCLAIMER CAREFULLY BEFORE USING THE SERVICE.
+
+The information and responses provided by the Smriti Ai chatbot (the "Servi=
+ce") are subject to the following terms:
+
+For Informational Purposes Only: The content generated by this Service is f=
+or general informational and internal educational purposes only. It is not =
+tailored to any specific situation and should be treated as a preliminary r=
+eference resource.
+
+Not Legal or Compliance Advice: The Service's output does not, under any ci=
+rcumstances, constitute legal, compliance, financial, or any other form of =
+professional advice. No professional-client relationship is formed by using=
+ this Service.
+
+No Guarantee of Accuracy: The responses are generated by an artificial inte=
+lligence model and are not guaranteed to be accurate, complete, or up-to-da=
+te. The information may not reflect the most recent regulatory changes, int=
+ernal policy updates, or legal interpretations.
+
+No Liability: Jio Insurance Broking Limited and its affiliates shall not be=
+ held liable for any actions taken or decisions made in reliance on the inf=
+ormation provided by this Service. You use the information at your own risk=
+.
+
+Not an Official Regulatory Interpretation: The output from this Service sho=
+uld not be considered an official interpretation, directive, or opinion fro=
+m the Insurance Regulatory and Development Authority of India (IRDAI) or an=
+y other regulatory body.
+
+Consult Internal Experts: This Service is not a substitute for professional=
+ judgment. For any definitive advice, high-level queries, or before making =
+any final decision, you must consult with the internal Legal and Compliance=
+ department.`
+        }
+    };
+
+    // Format modal content preserving line breaks and structure
+    function formatModalContent(text) {
+        if (!text) return '';
+       =20
+        const lines =3D text.split('\n');
+        let html =3D '';
+        let inList =3D false;
+        let currentParagraph =3D [];
+        let mainTitleFound =3D false;
+       =20
+        for (let i =3D 0; i < lines.length; i++) {
+            let line =3D lines[i].trim();
+           =20
+            // Skip empty lines
+            if (!line) {
+                if (currentParagraph.length > 0) {
+                    html +=3D '<p>' + currentParagraph.join(' ') + '</p>';
+                    currentParagraph =3D [];
+                }
+                if (inList) {
+                    html +=3D '</ul>';
+                    inList =3D false;
+                }
+                continue;
+            }
+           =20
+            // Check for main title (all caps, no numbers, reasonable lengt=
+h, first non-empty line or early in document)
+            if (!mainTitleFound && line =3D=3D=3D line.toUpperCase() && lin=
+e.length < 150 && !/^\d/.test(line) &&=20
+                (line.includes('SMRITI') || line.includes('TERMS') || line.=
+includes('PRIVACY') || line.includes('DISCLAIMER'))) {
+                html +=3D `<h1>${escapeHtml(line)}</h1>`;
+                mainTitleFound =3D true;
+                continue;
+            }
+           =20
+            // Check for section headings (numbered sections like "1. Purpo=
+se")
+            const sectionMatch =3D line.match(/^(\d+\.\s+[A-Z][^:]+?)(?::|$=
+)/);
+            if (sectionMatch) {
+                if (inList) {
+                    html +=3D '</ul>';
+                    inList =3D false;
+                }
+                if (currentParagraph.length > 0) {
+                    html +=3D '<p>' + currentParagraph.join(' ') + '</p>';
+                    currentParagraph =3D [];
+                }
+                html +=3D `<h2>${escapeHtml(sectionMatch[1])}</h2>`;
+                const rest =3D line.substring(sectionMatch[1].length).trim(=
+);
+                if (rest && rest.startsWith(':')) {
+                    rest =3D rest.substring(1).trim();
+                }
+                if (rest) {
+                    currentParagraph.push(rest);
+                }
+                continue;
+            }
+           =20
+            // Check for bullet points
+            if (/^[-=E2=80=A2]\s/.test(line)) {
+                if (currentParagraph.length > 0) {
+                    html +=3D '<p>' + currentParagraph.join(' ') + '</p>';
+                    currentParagraph =3D [];
+                }
+                if (!inList) {
+                    html +=3D '<ul>';
+                    inList =3D true;
+                }
+                html +=3D `<li>${escapeHtml(line.substring(2).trim())}</li>=
+`;
+                continue;
+            }
+           =20
+            // Check for numbered list items (not section headings)
+            const listMatch =3D line.match(/^(\d+\.\s+)(.+)$/);
+            if (listMatch && listMatch[2].length > 0 && !/^[A-Z][A-Z\s]{20,=
+}/.test(listMatch[2])) {
+                if (currentParagraph.length > 0) {
+                    html +=3D '<p>' + currentParagraph.join(' ') + '</p>';
+                    currentParagraph =3D [];
+                }
+                if (!inList) {
+                    html +=3D '<ul>';
+                    inList =3D true;
+                }
+                html +=3D `<li>${escapeHtml(listMatch[2])}</li>`;
+                continue;
+            }
+           =20
+            // Regular paragraph text
+            if (inList) {
+                html +=3D '</ul>';
+                inList =3D false;
+            }
+            currentParagraph.push(escapeHtml(line));
+        }
+       =20
+        // Close any remaining elements
+        if (currentParagraph.length > 0) {
+            html +=3D '<p>' + currentParagraph.join(' ') + '</p>';
+        }
+        if (inList) {
+            html +=3D '</ul>';
+        }
+       =20
+        return html;
+    }
+
+    function escapeHtml(text) {
+        const div =3D document.createElement('div');
+        div.textContent =3D text;
+        return div.innerHTML;
+    }
+
+    function openModal(type) {
+        const overlay =3D document.getElementById('modalOverlay');
+        const title =3D document.getElementById('modalTitle');
+        const content =3D document.getElementById('modalContent');
+       =20
+        if (modalContent[type]) {
+            title.textContent =3D modalContent[type].title;
+            content.innerHTML =3D formatModalContent(modalContent[type].con=
+tent);
+            overlay.classList.add('active');
+            document.body.style.overflow =3D 'hidden';
+        }
+    }
+
+    function closeModal() {
+        const overlay =3D document.getElementById('modalOverlay');
+        overlay.classList.remove('active');
+        document.body.style.overflow =3D '';
+    }
+
+    function closeModalOnOverlay(event) {
+        if (event.target.id =3D=3D=3D 'modalOverlay') {
+            closeModal();
+        }
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key =3D=3D=3D 'Escape') {
+            closeModal();
+        }
+    });
+
+    const STORAGE_KEY =3D "smriti_chat_history";
+    const chat =3D document.getElementById('chat');
+    const input =3D document.getElementById('input');
+    const typingIndicator =3D document.getElementById('typingIndicator');
+
+    let isFirstMessage =3D true;
+    let startupMessageShown =3D false;
+
+    // =E2=94=80=E2=94=80=E2=94=80 Configuration =E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80
+    const MAX_TURNS =3D 100;                    // =E2=89=88 14 messages (u=
+ser + assistant)
+    const MAX_CHARS_PER_MESSAGE =3D 6000;     // safety limit per message
+
+    // =E2=94=80=E2=94=80=E2=94=80 Format bot message content =E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80
+    function formatBotMessage(content) {
+        if (!content) return '';
+
+        let processed =3D content;
+
+        // Ensure numbered items after text start on new line
+        processed =3D processed.replace(/([^\n])\s+(\d+\.\s+[^\n]+)/g, '$1\=
+n$2');
+
+        const lines =3D processed.split('\n');
+        const result =3D [];
+        let listStack =3D [];
+        let currentParagraph =3D [];
+
+        function flushParagraph() {
+            if (currentParagraph.length > 0) {
+                result.push('<p>' + currentParagraph.join(' ') + '</p>');
+                currentParagraph =3D [];
+            }
+        }
+
+        function flushAllLists() {
+            while (listStack.length > 0) {
+                result.push('</ul>');
+                listStack.pop();
+            }
+        }
+
+        function getIndentLevel(line) {
+            const match =3D line.match(/^(\s*)/);
+            return match ? Math.floor(match[1].length / 2) : 0;
+        }
+
+        for (let line of lines) {
+            const trimmed =3D line.trim();
+            const indent =3D getIndentLevel(line);
+
+            if (!trimmed) {
+                flushParagraph();
+                flushAllLists();
+                continue;
+            }
+
+            // Numbered list item
+            const numMatch =3D trimmed.match(/^(\d+)\.\s+(.+)$/);
+            if (numMatch) {
+                flushParagraph();
+                while (listStack.length > indent) {
+                    result.push('</ul>');
+                    listStack.pop();
+                }
+                while (listStack.length < indent) {
+                    result.push('<ul>');
+                    listStack.push(indent);
+                }
+                if (listStack.length =3D=3D=3D 0) {
+                    result.push('<ul>');
+                    listStack.push(indent);
+                }
+                let text =3D numMatch[2].replace(/\*\*(.+?)\*\*/g, '<strong=
+>$1</strong>');
+                result.push('<li>' + text + '</li>');
+                continue;
+            }
+
+            // Bullet list
+            const bulletMatch =3D trimmed.match(/^[-*]\s+(.+)$/);
+            if (bulletMatch) {
+                flushParagraph();
+                while (listStack.length > indent) {
+                    result.push('</ul>');
+                    listStack.pop();
+                }
+                while (listStack.length < indent) {
+                    result.push('<ul>');
+                    listStack.push(indent);
+                }
+                if (listStack.length =3D=3D=3D 0) {
+                    result.push('<ul>');
+                    listStack.push(indent);
+                }
+                let text =3D bulletMatch[1].replace(/\*\*(.+?)\*\*/g, '<str=
+ong>$1</strong>');
+                result.push('<li>' + text + '</li>');
+                continue;
+            }
+
+            // Headings
+            if (trimmed.match(/^###\s+(.+)$/)) {
+                flushParagraph(); flushAllLists();
+                let h =3D trimmed.replace(/^###\s+/, '').replace(/\*\*(.+?)=
+\*\*/g, '<strong>$1</strong>');
+                result.push('<h3>' + h + '</h3>');
+                continue;
+            }
+            if (trimmed.match(/^##\s+(.+)$/)) {
+                flushParagraph(); flushAllLists();
+                let h =3D trimmed.replace(/^##\s+/, '').replace(/\*\*(.+?)\=
+*\*/g, '<strong>$1</strong>');
+                result.push('<h2>' + h + '</h2>');
+                continue;
+            }
+            if (trimmed.match(/^#\s+(.+)$/)) {
+                flushParagraph(); flushAllLists();
+                let h =3D trimmed.replace(/^#\s+/, '').replace(/\*\*(.+?)\*=
+\*/g, '<strong>$1</strong>');
+                result.push('<h1>' + h + '</h1>');
+                continue;
+            }
+
+            // Normal paragraph line
+            flushAllLists();
+            let processedLine =3D trimmed.replace(/\*\*(.+?)\*\*/g, '<stron=
+g>$1</strong>');
+            currentParagraph.push(processedLine);
+        }
+
+        flushParagraph();
+        flushAllLists();
+
+        if (result.length =3D=3D=3D 0) {
+            let fallback =3D content.replace(/\*\*(.+?)\*\*/g, '<strong>$1<=
+/strong>');
+            result.push('<p>' + fallback + '</p>');
+        }
+
+        return result.join('');
+    }
+
+    // =E2=94=80=E2=94=80=E2=94=80 History Management =E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80
+    function getHistory() {
+        try {
+            const data =3D sessionStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function saveHistory(history) {
+        try {
+            // Safety: truncate very long individual messages
+            const safeHistory =3D history.map(msg =3D> ({
+                role: msg.role,
+                content: msg.content.length > MAX_CHARS_PER_MESSAGE
+                    ? msg.content.substring(0, MAX_CHARS_PER_MESSAGE) + "=
+=E2=80=A6 [truncated]"
+                    : msg.content
+            }));
+
+            // Keep only the most recent turns
+            if (safeHistory.length > MAX_TURNS * 2) {
+                //safeHistory.splice(0, safeHistory.length - MAX_TURNS * 2)=
+;
+                safeHistory.splice(0, 2);
+            }
+
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(safeHistory)=
+);
+        } catch (e) {
+            console.warn("Failed to save history", e);
+        }
+    }
+
+    function addToHistory(role, content) {
+        if (!content?.trim()) return;
+        const history =3D getHistory();
+        history.push({ role, content: content.trim() });
+        saveHistory(history);
+    }
+
+    // =E2=94=80=E2=94=80=E2=94=80 UI Helpers =E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80
+    function addMessage(content, type =3D 'bot') {
+        if (isFirstMessage && type =3D=3D=3D 'user') {
+            document.querySelector('.welcome-message')?.remove();
+            document.querySelector('.startup-message')?.remove();
+            document.getElementById('headerTitle')?.classList.add('show');
+            isFirstMessage =3D false;
+        }
+
+        const div =3D document.createElement('div');
+        div.className =3D `message ${type =3D=3D=3D 'user' ? 'user-message'=
+ : 'bot-message'}`;
+
+        if (type =3D=3D=3D 'bot') {
+            div.innerHTML =3D formatBotMessage(content);
+        } else {
+            div.textContent =3D content;
+        }
+
+        chat.appendChild(div);
+        chat.scrollTop =3D chat.scrollHeight;
+        return div;
+    }
+
+    function showTyping() {
+        typingIndicator.style.display =3D 'flex';
+        chat.appendChild(typingIndicator);
+        chat.scrollTop =3D chat.scrollHeight;
+    }
+
+    function hideTyping() {
+        typingIndicator.style.display =3D 'none';
+    }
+
+    function addSourcesButton(messageDiv, sources) {
+        if (!sources?.length) return;
+
+        const btn =3D document.createElement('button');
+        btn.className =3D 'trace-button';
+        btn.textContent =3D `=F0=9F=93=9A View Sources (${sources.length})`=
+;
+
+        btn.onclick =3D () =3D> {
+            let panel =3D messageDiv.querySelector('.sources-panel');
+            if (!panel) {
+                panel =3D document.createElement('div');
+                panel.className =3D 'sources-panel';
+                panel.innerHTML =3D '<strong>Sources:</strong><br>' +
+                    sources.map((s, i) =3D> {
+                        const s3Uri =3D s.file || s.uri || 'N/A';
+                        // Escape HTML but keep the URI in data attribute
+                        const escapedUri =3D s3Uri.replace(/"/g, '&quot;');
+                        return `<div class=3D"source-item" data-s3-uri=3D"$=
+{escapedUri}">${i+1}. ${s3Uri}</div>`;
+                    }).join('');
+                messageDiv.appendChild(panel);
+
+                // Add click event listeners to source items using event de=
+legation
+                const sourceItems =3D panel.querySelectorAll('.source-item'=
+);
+                sourceItems.forEach(item =3D> {
+                    item.addEventListener('click', function() {
+                        const s3Uri =3D this.getAttribute('data-s3-uri');
+                        openDocument(s3Uri);
+                    });
+                });
+            }
+            panel.style.display =3D panel.style.display =3D=3D=3D 'block' ?=
+ 'none' : 'block';
+        };
+
+        messageDiv.appendChild(btn);
+    }
+
+    // =E2=94=80=E2=94=80=E2=94=80 Document Viewer Functions =E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80
+    let documentTimeoutId =3D null;
+
+    function openDocument(s3Uri) {
+        if (!s3Uri || s3Uri =3D=3D=3D 'N/A') {
+            alert('Invalid document source');
+            return;
+        }
+
+        // Show right panel and partition layout
+        const leftPanel =3D document.getElementById('leftPanel');
+        const rightPanel =3D document.getElementById('rightPanel');
+        const documentViewerContent =3D document.getElementById('documentVi=
+ewerContent');
+
+        leftPanel.classList.add('partitioned');
+        rightPanel.classList.add('active');
+
+        // Show loading state
+        documentViewerContent.innerHTML =3D '<div class=3D"document-placeho=
+lder">Loading document...</div>';
+
+        // Generate presigned URL
+        fetch('/presigned-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ s3_uri: s3Uri })
+        })
+        .then(res =3D> res.json())
+        .then(data =3D> {
+            if (data.presigned_url) {
+                // Clear any existing timeout
+                if (documentTimeoutId) {
+                    clearTimeout(documentTimeoutId);
+                }
+
+                // Display PDF in iframe
+                documentViewerContent.innerHTML =3D `<iframe src=3D"${data.=
+presigned_url}"></iframe>`;
+
+                // Set timeout for 5 minutes (300000 ms)
+                documentTimeoutId =3D setTimeout(() =3D> {
+                    documentViewerContent.innerHTML =3D '<div class=3D"docu=
+ment-placeholder">Select a document source</div>';
+                }, 300000); // 5 minutes
+            } else {
+                documentViewerContent.innerHTML =3D '<div class=3D"document=
+-placeholder">Error loading document</div>';
+            }
+        })
+        .catch(err =3D> {
+            console.error('Error generating presigned URL:', err);
+            documentViewerContent.innerHTML =3D '<div class=3D"document-pla=
+ceholder">Error loading document</div>';
+        });
+    }
+
+    function closeDocumentViewer() {
+        const leftPanel =3D document.getElementById('leftPanel');
+        const rightPanel =3D document.getElementById('rightPanel');
+        const documentViewerContent =3D document.getElementById('documentVi=
+ewerContent');
+
+        leftPanel.classList.remove('partitioned');
+        rightPanel.classList.remove('active');
+        documentViewerContent.innerHTML =3D '<div class=3D"document-placeho=
+lder">Select a document source</div>';
+
+        // Clear timeout if document viewer is closed
+        if (documentTimeoutId) {
+            clearTimeout(documentTimeoutId);
+            documentTimeoutId =3D null;
+        }
+    }
+
+    // =E2=94=80=E2=94=80=E2=94=80 Startup message =E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80
+    function showStartupMessage() {
+        if (startupMessageShown) return;
+
+        const msg =3D "Hi! I=E2=80=99m **Smriti**=E2=80=94JIBL=E2=80=99s in=
+ternal Legal & Compliance bot,\n\n here to give you quick, clear guidance o=
+n regulations, internal policies, and everyday compliance queries";
+       =20
+        const div =3D document.createElement('div');
+        div.className =3D 'startup-message';
+        div.innerHTML =3D formatBotMessage(msg);
+        chat.appendChild(div);
+        startupMessageShown =3D true;
+    }
+
+    // =E2=94=80=E2=94=80=E2=94=80 Page load =E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80
+    window.addEventListener('load', () =3D> {
+        // We no longer clear history here =E2=86=92 survives refresh, clea=
+red on tab close
+        isFirstMessage =3D true;
+        startupMessageShown =3D false;
+        setTimeout(showStartupMessage, 400);
+    });
+
+    // =E2=94=80=E2=94=80=E2=94=80 Send message =E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=
+=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=
+=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=
+=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80=E2=94=80
+    async function sendMessage() {
+        const text =3D input.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        addToHistory('user', text);
+
+        showTyping();
+        input.value =3D '';
+        input.disabled =3D true;
+
+        try {
+            const history =3D getHistory();
+
+            const res =3D await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    history: history
+                })
+            });
+
+            const data =3D await res.json();
+            hideTyping();
+
+            if (res.ok && data.reply) {
+                const messageDiv =3D addMessage(data.reply, 'bot');
+                addToHistory('assistant', data.reply);
+
+                if (data.sources?.length > 0) {
+                    addSourcesButton(messageDiv, data.sources);
+                }
+            } else {
+                addMessage('Error: ' + (data.error || 'Something went wrong=
+'), 'bot');
+            }
+        } catch (err) {
+            hideTyping();
+            addMessage('Connection error: ' + err.message, 'bot');
+        } finally {
+            input.disabled =3D false;
+            input.focus();
+        }
+    }
+
+    // Enter key support
+    input.addEventListener('keypress', e =3D> {
+        if (e.key =3D=3D=3D 'Enter' && !input.disabled) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
